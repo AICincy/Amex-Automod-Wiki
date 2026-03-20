@@ -2,10 +2,11 @@
 
 # ============================================================================
 # r/Amex AutoModerator Configuration (Remediated)
-# Version: 2.0
-# Last updated: 2026-03-19
+# Version: 3.0
+# Last updated: 2026-03-20
 # Sections: Shadowbans, PII/Doxxing, Spam/Scam, Account Quality,
-#           Community Helpers, Messaging, Report Handling
+#           Flair Enforcement, Report Handling, Community Helpers,
+#           Messaging, Content Quality
 # Source: https://support.reddithelp.com/hc/en-us/articles/15484574206484
 # CQS ref: https://support.reddithelp.com/hc/en-us/articles/19023371170196
 # Full docs: https://www.reddit.com/wiki/automoderator/full-documentation
@@ -34,6 +35,7 @@
 #         Discover (6011, 644-649, 65xx), Diners (300-305, 36xx, 38xx),
 #         JCB modern (35xx 16-digit) and JCB classic (2131, 1800 15-digit)
 # Ref: https://regex101.com/library/Y1Wsjc
+    priority: 1
     title+body (regex):
         # Visa (4xxx) + Mastercard (51xx-55xx, 2221-2720) — 16-digit, 4-4-4-4
         - '(?<!\d)(?:4\d{3}|5[1-5]\d{2}|2(?:22[1-9]|2[3-9]\d|[3-6]\d{2}|7[01]\d|720))[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}(?!\d)'
@@ -47,6 +49,7 @@
         - '(?<!\d)35\d{2}[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}(?!\d)'
         # JCB classic (2131, 1800) — 15-digit, 4-6-5
         - '(?<!\d)(?:2131|1800)[\s\-]?\d{6}[\s\-]?\d{5}(?!\d)'
+    ignore_blockquotes: true
     moderators_exempt: false
     action: remove
     action_reason: "Credit card number detected [{{match}}]"
@@ -64,7 +67,9 @@
 # Remove Social Security Numbers (XXX-XX-XXXX or XXXXXXXXX)
 # Handles dashes, spaces, or no separator
 # Excludes invalid SSA ranges: 000/666/9xx area, 00 group, 0000 serial
+    priority: 1
     title+body (regex): '(?<!\d)(?!000|666|9\d{2})\d{3}[\s\-]?(?!00)\d{2}[\s\-]?(?!0000)\d{4}(?!\d)'
+    ignore_blockquotes: true
     moderators_exempt: false
     action: remove
     action_reason: "Possible SSN detected [{{match}}]"
@@ -78,9 +83,11 @@
 ---
 # Remove US phone numbers
 # Matches: (XXX) XXX-XXXX, XXX-XXX-XXXX, XXX.XXX.XXXX, +1XXXXXXXXXX
+    priority: 1
     title+body (regex): '(?<!\d)(?:\+?1[\s\-\.]?)?\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\d{4}(?!\d)'
     # Exclude common false positives: fake/sequential numbers, 555-xxxx, crisis hotlines, digits in URLs
     ~body (regex): ['000\.000\.0000', '111\.111\.1111', '222\.222\.2222', '999\.999\.9999', '\d{3}\W+555\W\d{4}', '\d*1\W?2\W?3\W?4\W?5\W?6\W?7\W?8\W?9\d*', '800\W+273\.8255', '800\W+799\.7233', '(https?://|www\.)\S*([\(\)\._-]{0,3}\d){5}\w*']
+    ignore_blockquotes: true
     moderators_exempt: false
     action: filter
     action_reason: "Possible phone number detected [{{match}}]"
@@ -94,7 +101,9 @@
 ---
 # Remove email addresses with word boundaries
 # Excludes common system/service prefixes that are not personal information
+    priority: 1
     title+body (regex): '(?<![\.\w\-])(?!(?:abuse|help|info|no-?reply|phishing|service|spoof|support)\@)[\w\.\+\-]+@[\w\-]+\.[\w\.\-]+\b'
+    ignore_blockquotes: true
     moderators_exempt: false
     action: remove
     action_reason: "Email address detected [{{match}}]"
@@ -108,6 +117,43 @@
         1. Verify the removal was correct
         2. If the user is doxxing, [ban them](/r/{{subreddit}}/about/banned)
         3. [Report to Reddit admins](http://www.reddit.com/message/compose?to=%2Fr%2Freddit.com&subject=Doxxing%20Report:%20%2Fu%2F{{author}})
+---
+# Remove US mailing addresses (street number + street name + state/zip)
+# Catches: "123 Main St, City, CA 90210" or "456 Elm Ave Apt 7 New York NY 10001"
+    priority: 1
+    title+body (regex): '(?<!\d)\d{1,5}\s+[\w\s]{1,30}(?:st(?:reet)?|ave(?:nue)?|blvd|boulevard|dr(?:ive)?|ln|lane|rd|road|ct|court|pl(?:ace)?|way|cir(?:cle)?|pkwy|parkway)\b[\s,]+[\w\s]+,?\s*\b[A-Z]{2}\b\s+\d{5}(?:\-\d{4})?(?!\d)'
+    ignore_blockquotes: true
+    moderators_exempt: false
+    action: filter
+    action_reason: "Possible mailing address detected [{{match}}]"
+    modmail_subject: "PII Alert: Mailing Address"
+    modmail: |
+        {{permalink}}
+
+        The above {{kind}} by /u/{{author}} was filtered because it matched a US mailing address pattern.
+
+        Please verify and re-approve if it is not personal information (e.g., a business or Amex office address).
+---
+# Re-check edited posts/comments for PII
+# Catches users who edit in PII after initial approval
+    priority: 1
+    is_edited: true
+    title+body (regex):
+        - '(?<!\d)(?:4\d{3}|5[1-5]\d{2}|2(?:22[1-9]|2[3-9]\d|[3-6]\d{2}|7[01]\d|720))[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}(?!\d)'
+        - '(?<!\d)3[47]\d{2}[\s\-]?\d{6}[\s\-]?\d{5}(?!\d)'
+        - '(?<!\d)(?!000|666|9\d{2})\d{3}[\s\-]?(?!00)\d{2}[\s\-]?(?!0000)\d{4}(?!\d)'
+        - '(?<![\.\w\-])[\w\.\+\-]+@[\w\-]+\.[\w\.\-]+\b'
+    ignore_blockquotes: true
+    moderators_exempt: false
+    action: filter
+    action_reason: "Edited content contains possible PII [{{match}}]"
+    modmail_subject: "PII Alert: Edited Content"
+    modmail: |
+        {{permalink}}
+
+        The above {{kind}} by /u/{{author}} was **edited** and now contains a pattern matching PII (credit card, SSN, or email).
+
+        This may indicate a user edited in sensitive data after initial posting. Please review immediately.
 ---
 
 # ============================================================================
@@ -163,6 +209,45 @@
         - '\b(?:nigerian|advance[\-\s]?fee|lottery\s+win)\b'
     action: filter
     action_reason: "Possible scam language [{{match}}]"
+---
+# Detect Amex employee impersonation (common scam vector)
+    title+body (regex):
+        - '\b(?:i\s+work|i\s+am|i\'m)\s+(?:at|for|with)\s+(?:amex|american\s*express)\b'
+        - '\bamex\s+(?:employee|representative|agent|insider)\b'
+        - '\b(?:inside|insider)\s+(?:info|information|knowledge|tip)\s+(?:from|about|on)\s+amex\b'
+    action: filter
+    action_reason: "Possible Amex employee impersonation [{{match}}]"
+    modmail_subject: "Impersonation Alert"
+    modmail: |
+        {{permalink}}
+
+        The above {{kind}} by /u/{{author}} may contain claims of being an Amex employee or having insider information.
+
+        This is a common scam vector. Please verify and take appropriate action.
+---
+# Filter crypto/investment scam patterns
+    title+body (regex):
+        - '\b(?:guaranteed|risk[\-\s]?free)\s+(?:returns?|profit|income|investment)\b'
+        - '\b(?:double|triple|10x|100x)\s+your\s+(?:money|investment|points)\b'
+        - '\b(?:crypto|bitcoin|ethereum|nft)\s+(?:opportunity|investment|profit)\b'
+        - '\bdm\s+(?:me|for)\s+(?:investment|trading|crypto)\b'
+    action: filter
+    action_reason: "Possible investment/crypto scam [{{match}}]"
+---
+# Self-promotion filter: blog/YouTube/affiliate links from low-karma accounts
+    type: submission
+    author:
+        combined_subreddit_karma: "< 100"
+    title+body+url (regex):
+        - '(?:youtube\.com|youtu\.be)/(?:watch|channel|c/|@)'
+        - '\bmedium\.com/'
+        - '\bsubstack\.com/'
+        - '\bblogspot\.com/'
+        - '\bwordpress\.com/'
+        - '\b(?:amzn|amazon)\.[\w]+/.*(?:tag|ref)='
+    action: filter
+    action_reason: "Self-promotion from low-karma account [{{match}}]"
+    comment: "Your {{kind}} was filtered for moderator review because it contains a link to an external content platform and your account has limited activity in this community. A moderator will review it shortly."
 ---
 
 # ============================================================================
@@ -231,7 +316,26 @@ action_reason: "Inactive aged account (>1yr, <1 combined karma)"
 ---
 
 # ============================================================================
-# SECTION 5: REPORT HANDLING
+# SECTION 5: FLAIR ENFORCEMENT
+# Requires flair on all submissions for organized browsing.
+# ============================================================================
+
+---
+# Require flair on all submissions
+type: submission
+~flair_text (regex): '.+'
+action: remove
+action_reason: "Submission missing flair"
+comment: |
+    Your post was removed because it does not have a flair. Please add a flair and resubmit.
+
+    Common flairs for r/amex: Question, Data Point, Discussion, News, Rant, Review, Trip Report, Referral Thread.
+
+    *This is an automated action. If you need help, please [message the mods](https://www.reddit.com/message/compose?to=%2Fr%2F{{subreddit}}).*
+---
+
+# ============================================================================
+# SECTION 6: REPORT HANDLING
 # ============================================================================
 
 ---
@@ -247,7 +351,7 @@ action_reason: "Inactive aged account (>1yr, <1 combined karma)"
 ---
 
 # ============================================================================
-# SECTION 6: COMMUNITY HELPER BOTS
+# SECTION 7: COMMUNITY HELPER BOTS
 # Scoped narrowly to reduce false positives.
 # ============================================================================
 
@@ -300,9 +404,76 @@ type: submission
 body (regex): '\bcell(?:\s+phone)?\s+protection\b'
 comment: "It looks like you may be asking about cell phone protection. Please review the [terms of your policy](https://www.americanexpress.com/us/credit-cards/features-benefits/policies/cell-phone-protection.html) and ask pointed questions about any portions that are unclear. This is an automated response."
 ---
+# Extended warranty helper
+type: submission
+body (regex): '\b(?:extended|ext)\s+warrant(?:y|ies)\b'
+comment: "It looks like you may be asking about extended warranty protection. Please review the [terms of your policy](https://www.americanexpress.com/us/credit-cards/features-benefits/policies/extended-warranty-terms.html) and ask pointed questions about any portions that are unclear. This is an automated response. If triggered in error, please downvote."
+---
+# Car rental insurance helper
+type: submission
+body (regex): '\b(?:car|auto|vehicle)\s+(?:rental|rent)\s+(?:insurance|protection|coverage|CDW|LDW)\b|\b(?:CDW|LDW)\s+(?:coverage|protection|insurance)\b'
+comment: "It looks like you may be asking about car rental insurance. Amex offers Premium Car Rental Protection as an optional benefit on many cards. Please review the [terms of your policy](https://www.americanexpress.com/us/credit-cards/features-benefits/policies/car-rental-loss-and-damage-insurance-terms.html) and ask pointed questions about any portions that are unclear. This is an automated response. If triggered in error, please downvote."
+---
+# Annual fee retention helper
+type: submission
+body (regex): '\b(?:annual\s+fee|AF)\s+(?:retention|retent|waiv|credit|offer)\b|\bretention\s+(?:offer|call|department)\b'
+comment: |
+    It looks like you may be asking about annual fee retention offers.
+
+    **Tips for a successful retention call:**
+    1. Call the number on the back of your card or chat via the Amex app
+    2. Ask to speak with the "Member Services" or "Retention" department
+    3. Politely explain you are considering closing due to the annual fee
+    4. They may offer statement credits, bonus points, or a fee waiver
+    5. You are not obligated to accept — you can ask for time to think about it
+
+    Check r/amex for recent data points on retention offers for your specific card.
+
+    *This is an automated response. If triggered in error, please downvote.*
+---
+# Amex Offers / Amex Deals helper
+type: submission
+body (regex): '\bamex\s+(?:offer|deal)s?\b|\badd(?:ed|ing)?\s+(?:all\s+)?offers?\b'
+comment: "It looks like you may be asking about Amex Offers. Offers are personalized and vary by cardmember. You can view and add offers in the Amex app under the \"Offers\" tab or at [americanexpress.com/offers](https://www.americanexpress.com/us/rewards/membership-rewards/offers/index.html). Remember: offers must be added to your card *before* the purchase. This is an automated response. If triggered in error, please downvote."
+---
+# Airline/hotel transfer partner helper
+type: submission
+body (regex): '\btransfer\s+(?:partner|point|MR)s?\b|\b(?:MR|membership\s+rewards?)\s+(?:transfer|point)\b'
+comment: |
+    It looks like you may be asking about Membership Rewards transfer partners.
+
+    Amex MR points transfer to numerous airline and hotel programs. For the current list of partners and transfer ratios, see [Amex Transfer Partners](https://www.americanexpress.com/us/rewards/membership-rewards/travel/points-transfer.html).
+
+    **Key tips:**
+    - Transfers are usually instant but can take up to 48 hours
+    - Most transfers are 1:1 but some partners have different ratios
+    - Transfers are one-way and cannot be reversed
+    - Watch for periodic transfer bonuses (e.g., 30% bonus to certain partners)
+
+    *This is an automated response. If triggered in error, please downvote.*
+---
+# Financial review helper
+type: submission
+body (regex): '\bfinancial\s+review\b|\b(?:FR|finrev)\b'
+~body (regex): '\b(?:fire\s+department|first\s+responder|federal\s+register)\b'
+comment: |
+    It looks like you may be asking about an Amex Financial Review (FR).
+
+    A Financial Review is when Amex requests documentation to verify your income and spending. **Do not panic.** Key things to know:
+
+    1. Respond promptly — provide the requested documents (tax returns, bank statements, etc.)
+    2. During the review, your cards may be restricted
+    3. The review typically takes 2-6 weeks
+    4. Being honest and cooperative is the best strategy
+    5. Do NOT close your cards during the review
+
+    Search r/amex for recent FR data points and experiences.
+
+    *This is an automated response. If triggered in error, please downvote.*
+---
 
 # ============================================================================
-# SECTION 7: MESSAGING / SOLICITATION FILTERS
+# SECTION 8: MESSAGING / SOLICITATION FILTERS
 # Scoped to reduce false positives from "3 PM" or "DM" in other contexts
 # ============================================================================
 
@@ -312,4 +483,43 @@ type: comment
 body (regex): '\b(?:send\s+(?:me\s+)?a?\s*)?(?:DM|PM|direct\s+messag)\w*\s+me\b|\bDM\s+(?:me|sent|open)\b|\bslide\s+(?:in(?:to)?)\s+(?:my\s+)?DMs?\b|\bcheck\s+(?:your?\s+)?(?:DM|PM|inbox)\b'
 action: filter
 action_reason: "DM/PM solicitation detected [{{match}}]"
+---
+
+# ============================================================================
+# SECTION 9: CONTENT QUALITY
+# Image-only post filter, low-effort post detection, title requirements
+# ============================================================================
+
+---
+# Filter image-only submissions with no body text
+# Requires users to provide context for screenshots/images
+type: submission
+body (regex, full-exact): '^\s*$'
+domain (includes): ["i.redd.it", "imgur.com", "i.imgur.com"]
+action: filter
+action_reason: "Image post with no body text"
+comment: |
+    Your post appears to be an image with no accompanying text. To help the community assist you, please add context in a comment explaining:
+
+    - What card or product this relates to
+    - What question you have or what you want to discuss
+    - Any relevant details (e.g., approval date, credit score range)
+
+    A moderator will review and approve your post once context is provided.
+
+    *This is an automated action. If you believe this was an error, please [message the mods](https://www.reddit.com/message/compose?to=%2Fr%2F{{subreddit}}).*
+---
+# Filter low-effort titles
+type: submission
+title (regex, full-exact): '(?i)^(?:help|question|amex|advice|please|urgent|asap|!!!+|wtf|\?\?+|[a-z]{1,4})$'
+action: filter
+action_reason: "Low-effort title [{{match}}]"
+comment: "Your post was filtered because the title appears too short or generic. Please resubmit with a descriptive title that summarizes your question or topic (e.g., 'Can I upgrade Gold to Platinum mid-year?' instead of 'Question'). This is an automated action."
+---
+# Filter ALL CAPS titles (shouting)
+type: submission
+title (regex, full-exact): '^[^a-z]{15,}$'
+action: filter
+action_reason: "All caps title"
+comment: "Your post was filtered because the title appears to be in ALL CAPS. Please resubmit with normal capitalization. This is an automated action."
 ---
