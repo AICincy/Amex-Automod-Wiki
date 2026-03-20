@@ -83,7 +83,7 @@
 # digit may be separated by a single common separator character.
 # Limited to card-valid first digits [3-6] to reduce false positives.
     priority: 1
-    title+body (regex): '(?<!\d)[3-6][\s\.\-_/]?\d(?:[\s\.\-_/]?\d){11,17}(?!\d)'
+    title+body (regex): '(?<!\d)[1-6][\s\.\-_/]?\d(?:[\s\.\-_/]?\d){11,17}(?!\d)'
     # Exclude contiguous runs (already caught by secondary rule) — only want truly separated
     ~body (regex): '\d{13,19}'
     ignore_blockquotes: true
@@ -226,7 +226,7 @@
         - '(?<!\d)(?:4\d{3}|5[1-5]\d{2}|2(?:22[1-9]|2[3-9]\d|[3-6]\d{2}|7[01]\d|720))[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}(?!\d)'
         - '(?<!\d)3[47]\d{2}[^\da-zA-Z]{0,6}\d{6}[^\da-zA-Z]{0,6}\d{5}(?!\d)'
         # CC per-digit
-        - '(?<!\d)[3-6][\s\.\-_/]?\d(?:[\s\.\-_/]?\d){11,17}(?!\d)'
+        - '(?<!\d)[1-6][\s\.\-_/]?\d(?:[\s\.\-_/]?\d){11,17}(?!\d)'
         # CC contiguous
         - '(?<!\d)\d{13,19}(?!\d)'
         # SSN
@@ -355,7 +355,7 @@
 # Whitelisted: americanexpress.com, amex.com, reddit.com, redd.it
 # Boundary (?:[/\s?#]|$) prevents americanexpress.com.evil.com bypass
     priority: 1
-    title+body+url (regex): 'https?://(?!(?:[\w\-]+\.)*(?:americanexpress|amex)\.com(?:[/\s?#]|$))(?!(?:[\w\-]+\.)*(?:reddit\.com|redd\.it|reddithelp\.com|redditmedia\.com|redditstatic\.com)(?:[/\s?#]|$))[\w\.\-]+\.\w+'
+    title+body+url (regex): 'https?://(?!(?:[\w\-]+\.)*(?:americanexpress|amex)\.com(?:[/\s?#:]|$))(?!(?:[\w\-]+\.)*(?:reddit\.com|redd\.it|reddithelp\.com|redditmedia\.com|redditstatic\.com)(?:[/\s?#:]|$))[\w\.\-]+\.\w+'
     moderators_exempt: true
     action: remove
     action_reason: "Rule 2: External link (non-Amex domain) [{{match}}]"
@@ -363,7 +363,7 @@
 ---
 # Catch www. prefix URLs to non-whitelisted domains
     priority: 1
-    title+body (regex): '(?i)(?<![/\w])www\.(?!(?:[\w\-]+\.)*(?:americanexpress|amex)\.com(?:[/\s?#]|$))(?!(?:[\w\-]+\.)*(?:reddit\.com|redd\.it)(?:[/\s?#]|$))[\w\.\-]+\.\w+'
+    title+body (regex): '(?i)(?<![/\w])www\.(?!(?:[\w\-]+\.)*(?:americanexpress|amex)\.com(?:[/\s?#:]|$))(?!(?:[\w\-]+\.)*(?:reddit\.com|redd\.it)(?:[/\s?#:]|$))[\w\.\-]+\.\w+'
     moderators_exempt: true
     action: remove
     action_reason: "Rule 2: External link via www prefix [{{match}}]"
@@ -386,7 +386,7 @@
         - '(?i)american[\-_]?express[\-_]?(?:secure|verify|login|update|alert)'
         - '(?i)(?:amex|american[\-_]?express|credit[\-_]?card)[\w\-]*\.(?:xyz|tk|ml|ga|cf|top|click|buzz|icu|gq|work|date|racing|stream|bid|loan|win|party|link|rest|site|space|fun|monster|bar|cfd|sbs|quest)'
         - '(?i)amex\d+\.(?:com|net|org)'
-        - '(?i)\[[^\]]*(?:amex|american\s*express)[^\]]*\]\((?:https?://)?(?!(?:[\w\-]+\.)?(?:americanexpress|amex)\.com)[\w\.\-]+\.\w+'
+        - '(?i)\[[^\]]*(?:amex|american\s*express)[^\]]*\]\((?:https?://)?(?!(?:[\w\-]+\.)?(?:americanexpress|amex)\.com(?:[/\s?#:]|$))[\w\.\-]+\.\w+'
     moderators_exempt: false
     action: remove
     action_reason: "Rule 2: Phishing domain detected [{{match}}]"
@@ -432,7 +432,7 @@
     modmail: |
         {{permalink}}
 
-        The above {{kind}} by /u/{{author}} may claim insider Amex access. Please verify — potential Rule 2 violation.
+        The above {{kind}} by /u/{{author}} may claim insider Amex access. Please verify — if this is a verified Amex representative, re-approve. Otherwise, potential Rule 2 violation.
 ---
 # Detect financial/crypto scam patterns
     title+body (regex):
@@ -719,7 +719,7 @@ comment: |
 ---
 type: submission
 body (regex): '\bfinancial\s+review\b|\b(?:amex|american\s*express)\b[\s\S]*?\bFR\b|\bFR\b[\s\S]*?\b(?:amex|american\s*express)\b|\bfinrev\b'
-~body (regex): '\b(?:fire\s+department|first\s+responder|federal\s+register|franc[es]?\b|friday)'
+~body (regex): '\b(?:fire\s+department|first\s+responder|federal\s+register|francs?|france|friday)\b'
 comment: |
     It looks like you may be asking about an Amex Financial Review (FR).
 
