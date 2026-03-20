@@ -121,7 +121,7 @@
 # Remove US mailing addresses (street number + street name + state/zip)
 # Catches: "123 Main St, City, CA 90210" or "456 Elm Ave Apt 7 New York NY 10001"
     priority: 1
-    title+body (regex): '(?<!\d)\d{1,5}\s+[\w\s]{1,30}(?:st(?:reet)?|ave(?:nue)?|blvd|boulevard|dr(?:ive)?|ln|lane|rd|road|ct|court|pl(?:ace)?|way|cir(?:cle)?|pkwy|parkway)\b[\s,]+[\w\s]+,?\s*\b[A-Z]{2}\b\s+\d{5}(?:\-\d{4})?(?!\d)'
+    title+body (regex): '(?<!\d)\d{1,5}\s+[A-Za-z][\w\s]{0,29}(?:st(?:reet)?|ave(?:nue)?|blvd|boulevard|dr(?:ive)?|ln|lane|rd|road|ct|court|pl(?:ace)?|way|cir(?:cle)?|pkwy|parkway)\b[\s,]+[\w\s]+,?\s*\b[A-Z]{2}\b\s+\d{5}(?:\-\d{4})?(?!\d)'
     ignore_blockquotes: true
     moderators_exempt: false
     action: filter
@@ -212,7 +212,7 @@
 ---
 # Detect Amex employee impersonation (common scam vector)
     title+body (regex):
-        - '\b(?:i\s+work|i\s+am|i\'m)\s+(?:at|for|with)\s+(?:amex|american\s*express)\b'
+        - "\b(?:i\\s+work|i\\s+am|i'm)\\s+(?:at|for|with)\\s+(?:amex|american\\s*express)\b"
         - '\bamex\s+(?:employee|representative|agent|insider)\b'
         - '\b(?:inside|insider)\s+(?:info|information|knowledge|tip)\s+(?:from|about|on)\s+amex\b'
     action: filter
@@ -454,8 +454,8 @@ comment: |
 ---
 # Financial review helper
 type: submission
-body (regex): '\bfinancial\s+review\b|\b(?:FR|finrev)\b'
-~body (regex): '\b(?:fire\s+department|first\s+responder|federal\s+register)\b'
+body (regex): '\bfinancial\s+review\b|\b(?:amex|american\s*express)\b[\s\S]*?\bFR\b|\bFR\b[\s\S]*?\b(?:amex|american\s*express)\b|\bfinrev\b'
+~body (regex): '\b(?:fire\s+department|first\s+responder|federal\s+register|franc[es]?\b|friday)'
 comment: |
     It looks like you may be asking about an Amex Financial Review (FR).
 
