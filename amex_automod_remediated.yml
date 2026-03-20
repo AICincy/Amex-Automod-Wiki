@@ -30,25 +30,29 @@
 # ============================================================================
 
 ---
-# Remove credit card numbers (with/without spaces/dashes)
+# Remove credit card numbers (with/without ANY non-alphanumeric separators)
 # Covers: Visa (4xxx), Mastercard (51xx-55xx, 2221-2720), Amex (34xx, 37xx),
 #         Discover (6011, 644-649, 65xx), Diners (300-305, 36xx, 38xx),
 #         JCB modern (35xx 16-digit) and JCB classic (2131, 1800 15-digit)
+# Separator [^\da-zA-Z]{0,6} matches ANY non-alphanumeric chars (spaces, dots,
+# dashes, underscores, pipes, markdown bold/italic, backticks, brackets, etc.)
+# This prevents bypass via dot/underscore/pipe/markdown formatting obfuscation.
+# BIN prefix (e.g. 4\d{3}) requires contiguous digits, limiting false positives.
 # Ref: https://regex101.com/library/Y1Wsjc
     priority: 1
     title+body (regex):
         # Visa (4xxx) + Mastercard (51xx-55xx, 2221-2720) — 16-digit, 4-4-4-4
-        - '(?<!\d)(?:4\d{3}|5[1-5]\d{2}|2(?:22[1-9]|2[3-9]\d|[3-6]\d{2}|7[01]\d|720))[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}(?!\d)'
+        - '(?<!\d)(?:4\d{3}|5[1-5]\d{2}|2(?:22[1-9]|2[3-9]\d|[3-6]\d{2}|7[01]\d|720))[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}(?!\d)'
         # Amex (34xx, 37xx) — 15-digit, 4-6-5
-        - '(?<!\d)3[47]\d{2}[\s\-]?\d{6}[\s\-]?\d{5}(?!\d)'
+        - '(?<!\d)3[47]\d{2}[^\da-zA-Z]{0,6}\d{6}[^\da-zA-Z]{0,6}\d{5}(?!\d)'
         # Discover (6011, 644-649, 65xx) — 16-digit, 4-4-4-4
-        - '(?<!\d)(?:6011|64[4-9]\d|65\d{2})[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}(?!\d)'
+        - '(?<!\d)(?:6011|64[4-9]\d|65\d{2})[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}(?!\d)'
         # Diners Club (300-305, 36xx, 38xx) — 14-digit, 4-4-4-2
-        - '(?<!\d)3(?:0[0-5]|[68]\d)\d[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{2}(?!\d)'
+        - '(?<!\d)3(?:0[0-5]|[68]\d)\d[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{2}(?!\d)'
         # JCB modern (35xx) — 16-digit, 4-4-4-4
-        - '(?<!\d)35\d{2}[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}(?!\d)'
+        - '(?<!\d)35\d{2}[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}(?!\d)'
         # JCB classic (2131, 1800) — 15-digit, 4-6-5
-        - '(?<!\d)(?:2131|1800)[\s\-]?\d{6}[\s\-]?\d{5}(?!\d)'
+        - '(?<!\d)(?:2131|1800)[^\da-zA-Z]{0,6}\d{6}[^\da-zA-Z]{0,6}\d{5}(?!\d)'
     ignore_blockquotes: true
     moderators_exempt: false
     action: remove
@@ -64,11 +68,49 @@
         2. If the user is doxxing, [ban them](/r/{{subreddit}}/about/banned)
         3. [Report to Reddit admins](http://www.reddit.com/message/compose?to=%2Fr%2Freddit.com&subject=Doxxing%20Report:%20%2Fu%2F{{author}})
 ---
+# CC per-digit separation defense: catches "4 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5"
+# Primary grouped patterns require contiguous digits within each group, so
+# per-digit obfuscation bypasses them. This catches 13-19 digits where each
+# digit may be separated by a single common separator character.
+# Limited to card-valid first digits [3-6] to reduce false positives.
+    priority: 1
+    title+body (regex): '(?<!\d)[3-6][\s\.\-_/]?\d(?:[\s\.\-_/]?\d){11,17}(?!\d)'
+    # Exclude contiguous runs (already caught by secondary rule) — only want truly separated
+    ~body (regex): '\d{13,19}'
+    ignore_blockquotes: true
+    moderators_exempt: false
+    action: filter
+    action_reason: "Per-digit separated card number pattern [{{match}}]"
+    modmail_subject: "PII Alert: Separated Card Digits"
+    modmail: |
+        {{permalink}}
+
+        The above {{kind}} by /u/{{author}} contains digits separated individually that may be an obfuscated credit card number (e.g., "4-1-2-3-4-5-6-7-8-9-0-1-2-3-4-5").
+
+        This pattern is commonly used to bypass grouped digit detection. Please verify.
+---
+# CC contiguous digit defense: catches raw digit dumps (no separators at all)
+# Matches 13-19 contiguous digits (valid range for all major card networks)
+    priority: 2
+    title+body (regex): '(?<!\d)\d{13,19}(?!\d)'
+    # Exclude contexts where long digit strings are expected
+    ~body (regex): ['(?i)(?:tracking|order|confirmation|reference|invoice|receipt|account|transaction|auth(?:orization)?)\s*[#:_\-]?\s*\d{13,19}', '(?i)(?:sku|upc|ean|isbn|asin|imei|meid|iccid)\s*[#:_\-]?\s*\d{13,19}']
+    ignore_blockquotes: true
+    moderators_exempt: false
+    action: filter
+    action_reason: "Contiguous digit run — possible unformatted card number [{{match}}]"
+    modmail_subject: "PII Alert: Possible Card Number"
+    modmail: |
+        {{permalink}}
+
+        The above {{kind}} by /u/{{author}} contains a 13-19 digit sequence that may be an unformatted credit card number. Please verify.
+---
 # Remove Social Security Numbers (XXX-XX-XXXX or XXXXXXXXX)
-# Handles dashes, spaces, or no separator
+# Separator [^\da-zA-Z]{0,4} catches any non-alphanumeric separator (dashes,
+# dots, pipes, underscores, markdown, etc.) to prevent trivial bypass.
 # Excludes invalid SSA ranges: 000/666/9xx area, 00 group, 0000 serial
     priority: 1
-    title+body (regex): '(?<!\d)(?!000|666|9\d{2})\d{3}[\s\-]?(?!00)\d{2}[\s\-]?(?!0000)\d{4}(?!\d)'
+    title+body (regex): '(?<!\d)(?!000|666|9\d{2})\d{3}[^\da-zA-Z]{0,4}(?!00)\d{2}[^\da-zA-Z]{0,4}(?!0000)\d{4}(?!\d)'
     ignore_blockquotes: true
     moderators_exempt: false
     action: remove
@@ -82,11 +124,13 @@
         If doxxing is confirmed, [ban them](/r/{{subreddit}}/about/banned) and [report to admins](http://www.reddit.com/message/compose?to=%2Fr%2Freddit.com&subject=Doxxing%20Report:%20%2Fu%2F{{author}}).
 ---
 # Remove US phone numbers
-# Matches: (XXX) XXX-XXXX, XXX-XXX-XXXX, XXX.XXX.XXXX, +1XXXXXXXXXX
+# Separator [^\da-zA-Z]{0,4} catches any non-alphanumeric separator to prevent
+# bypass via pipes, semicolons, markdown, multi-char gaps (e.g. "123 - 456 - 7890")
     priority: 1
-    title+body (regex): '(?<!\d)(?:\+?1[\s\-\.]?)?\(?\d{3}\)?[\s\-\.]?\d{3}[\s\-\.]?\d{4}(?!\d)'
-    # Exclude common false positives: fake/sequential numbers, 555-xxxx, crisis hotlines, digits in URLs
-    ~body (regex): ['000\.000\.0000', '111\.111\.1111', '222\.222\.2222', '999\.999\.9999', '\d{3}\W+555\W\d{4}', '\d*1\W?2\W?3\W?4\W?5\W?6\W?7\W?8\W?9\d*', '800\W+273\.8255', '800\W+799\.7233', '(https?://|www\.)\S*([\(\)\._-]{0,3}\d){5}\w*']
+    title+body (regex): '(?<!\d)(?:\+?1[^\da-zA-Z]{0,4})?\(?\d{3}\)?[^\da-zA-Z]{0,4}\d{3}[^\da-zA-Z]{0,4}\d{4}(?!\d)'
+    # Exclude false positives: fake numbers, 555-xxxx, crisis hotlines, digits in URLs
+    # Exclusion separators use \W+ to match any separator style
+    ~body (regex): ['000\W+000\W+0000', '111\W+111\W+1111', '222\W+222\W+2222', '999\W+999\W+9999', '\d{3}\W+555\W+\d{4}', '\d*1\W?2\W?3\W?4\W?5\W?6\W?7\W?8\W?9\d*', '800\W+273\W+8255', '800\W+799\W+7233', '988', '(https?://|www\.)\S*([\(\)\._\-]{0,3}\d){5}\w*']
     ignore_blockquotes: true
     moderators_exempt: false
     action: filter
@@ -99,10 +143,10 @@
 
         Please verify and re-approve if it is not personal information.
 ---
-# Remove email addresses with word boundaries
+# Remove email addresses — also catches spaces around @ sign to prevent bypass
 # Excludes common system/service prefixes that are not personal information
     priority: 1
-    title+body (regex): '(?<![\.\w\-])(?!(?:abuse|help|info|no-?reply|phishing|service|spoof|support)\@)[\w\.\+\-]+@[\w\-]+\.[\w\.\-]+\b'
+    title+body (regex): '(?<![\.\w\-])(?!(?:abuse|help|info|no-?reply|phishing|service|spoof|support)\s*@)[\w\.\+\-]+\s*@\s*[\w\-]+\.[\w\.\-]+\b'
     ignore_blockquotes: true
     moderators_exempt: false
     action: remove
@@ -117,6 +161,34 @@
         1. Verify the removal was correct
         2. If the user is doxxing, [ban them](/r/{{subreddit}}/about/banned)
         3. [Report to Reddit admins](http://www.reddit.com/message/compose?to=%2Fr%2Freddit.com&subject=Doxxing%20Report:%20%2Fu%2F{{author}})
+---
+# Catch obfuscated email addresses that evade the @ check entirely
+# Matches: user [at] domain [dot] com, user (at) domain (dot) com,
+#          user {at} domain {dot} com, user <at> domain <dot> com
+# Requires brackets/parens/braces around "at"/"dot" to limit false positives
+    priority: 1
+    title+body (regex): '(?i)[\w\.\+\-]+\s*[\[\(\{<]\s*(?:at|@)\s*[\]\)\}>]\s*[\w\-]+\s*[\[\(\{<]\s*(?:dot|\.)\s*[\]\)\}>]\s*[\w\.\-]+'
+    ignore_blockquotes: true
+    moderators_exempt: false
+    action: filter
+    action_reason: "Obfuscated email detected [{{match}}]"
+    modmail_subject: "PII Alert: Obfuscated Email"
+    modmail: |
+        {{permalink}}
+
+        The above {{kind}} by /u/{{author}} contains an obfuscated email pattern (e.g., "user [at] domain [dot] com").
+
+        Please verify and re-approve if it is not personal information.
+---
+# Catch obfuscated email — bare "AT"/"DOT" keywords (no brackets)
+# Stricter context: requires ALL CAPS "AT" and "DOT" or mixed with @ . symbols
+# to avoid matching plain English "looked at the thing dot com style"
+    priority: 2
+    title+body (regex): '[\w\.\+\-]+\s+AT\s+[\w\-]+\s+DOT\s+[\w\.\-]+'
+    ignore_blockquotes: true
+    moderators_exempt: false
+    action: filter
+    action_reason: "Obfuscated email (bare AT/DOT) [{{match}}]"
 ---
 # Remove US mailing addresses (street number + street name + state/zip)
 # Catches: "123 Main St, City, CA 90210" or "456 Elm Ave Apt 7 New York NY 10001"
@@ -134,15 +206,26 @@
 
         Please verify and re-approve if it is not personal information (e.g., a business or Amex office address).
 ---
-# Re-check edited posts/comments for PII
+# Re-check edited posts/comments for ALL PII patterns
 # Catches users who edit in PII after initial approval
+# Separators kept in sync with hardened primary PII rules above
+# Includes obfuscated email and per-digit CC patterns
     priority: 1
     is_edited: true
     title+body (regex):
-        - '(?<!\d)(?:4\d{3}|5[1-5]\d{2}|2(?:22[1-9]|2[3-9]\d|[3-6]\d{2}|7[01]\d|720))[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}(?!\d)'
-        - '(?<!\d)3[47]\d{2}[\s\-]?\d{6}[\s\-]?\d{5}(?!\d)'
-        - '(?<!\d)(?!000|666|9\d{2})\d{3}[\s\-]?(?!00)\d{2}[\s\-]?(?!0000)\d{4}(?!\d)'
-        - '(?<![\.\w\-])[\w\.\+\-]+@[\w\-]+\.[\w\.\-]+\b'
+        # CC grouped (any non-alnum separator)
+        - '(?<!\d)(?:4\d{3}|5[1-5]\d{2}|2(?:22[1-9]|2[3-9]\d|[3-6]\d{2}|7[01]\d|720))[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}(?!\d)'
+        - '(?<!\d)3[47]\d{2}[^\da-zA-Z]{0,6}\d{6}[^\da-zA-Z]{0,6}\d{5}(?!\d)'
+        # CC per-digit
+        - '(?<!\d)[3-6][\s\.\-_/]?\d(?:[\s\.\-_/]?\d){11,17}(?!\d)'
+        # CC contiguous
+        - '(?<!\d)\d{13,19}(?!\d)'
+        # SSN
+        - '(?<!\d)(?!000|666|9\d{2})\d{3}[^\da-zA-Z]{0,4}(?!00)\d{2}[^\da-zA-Z]{0,4}(?!0000)\d{4}(?!\d)'
+        # Email (with spaces around @)
+        - '(?<![\.\w\-])[\w\.\+\-]+\s*@\s*[\w\-]+\.[\w\.\-]+\b'
+        # Obfuscated email
+        - '(?i)[\w\.\+\-]+\s*[\[\(\{<]\s*(?:at|@)\s*[\]\)\}>]\s*[\w\-]+\s*[\[\(\{<]\s*(?:dot|\.)\s*[\]\)\}>]\s*[\w\.\-]+'
     ignore_blockquotes: true
     moderators_exempt: false
     action: filter
@@ -154,6 +237,21 @@
         The above {{kind}} by /u/{{author}} was **edited** and now contains a pattern matching PII (credit card, SSN, or email).
 
         This may indicate a user edited in sensitive data after initial posting. Please review immediately.
+---
+# Secondary defense: catch PII hidden inside blockquotes
+# Primary PII rules use ignore_blockquotes:true for fewer false positives,
+# but this creates a bypass — PII in > quotes is invisible to them.
+# This rule checks everything (ignore_blockquotes:false) with filter action.
+# Separators synced with primary rules.
+    priority: 2
+    title+body (regex):
+        - '(?<!\d)(?:4\d{3}|5[1-5]\d{2}|3[47]\d{2}|6011|65\d{2})[^\da-zA-Z]{0,6}\d{4,6}[^\da-zA-Z]{0,6}\d{4,5}(?!\d)'
+        - '(?<!\d)(?!000|666|9\d{2})\d{3}[^\da-zA-Z]{0,4}(?!00)\d{2}[^\da-zA-Z]{0,4}(?!0000)\d{4}(?!\d)'
+        - '(?<![\.\w\-])[\w\.\+\-]+\s*@\s*[\w\-]+\.[\w\.\-]+\b'
+    ignore_blockquotes: false
+    moderators_exempt: false
+    action: filter
+    action_reason: "Possible PII in blockquoted content [{{match}}]"
 ---
 
 # ============================================================================
