@@ -81,7 +81,7 @@
 # Primary grouped patterns require contiguous digits within each group, so
 # per-digit obfuscation bypasses them. This catches 13-19 digits where each
 # digit may be separated by a single common separator character.
-# Limited to card-valid first digits [3-6] to reduce false positives.
+# Limited to card-valid first digits [1-6] (includes JCB 1xxx, MC 2xxx, Visa 4xxx, etc.)
     priority: 1
     title+body (regex): '(?<!\d)[1-6][\s\.\-_/]?\d(?:[\s\.\-_/]?\d){11,17}(?!\d)'
     # Exclude contiguous runs (already caught by secondary rule) — only want truly separated
@@ -252,9 +252,10 @@
 # non-joiners (U+200C), word joiners (U+2060), and other invisible chars
 # inserted between digits/letters to break regex matching.
 # Example: "4​1​2​3" (digits separated by zero-width spaces) evades \d{4}
+# Uses YAML double-quoted strings so \uXXXX escapes produce literal chars.
     priority: 1
     title+body (regex):
-        - '[\x{200B}\x{200C}\x{200D}\x{200E}\x{200F}\x{2060}\x{FEFF}]'
+        - "[\u200B\u200C\u200D\u200E\u200F\u2060\uFEFF]"
     moderators_exempt: false
     action: filter
     action_reason: "Zero-width Unicode character detected — possible pattern evasion [{{match}}]"
@@ -267,15 +268,16 @@
         This is a strong indicator of intentional evasion. Please review the content carefully for hidden PII.
 ---
 # Detect fullwidth/Unicode digit substitution used to bypass \d matching
-# Fullwidth digits (０-９, U+FF10-FF19), superscript/subscript digits,
+# Fullwidth digits (U+FF10-FF19), superscript digits, subscript digits,
 # and circled digits can represent numbers while evading standard \d regex.
 # Example: "４１２３ ４５６７ ８９０１ ２３４５" evades standard CC detection
+# Uses YAML double-quoted strings so \uXXXX escapes produce literal chars.
     priority: 1
     title+body (regex):
-        - '[\x{FF10}-\x{FF19}]{3,}'
-        - '[\x{2070}\x{00B9}\x{00B2}\x{00B3}\x{2074}-\x{2079}]{3,}'
-        - '[\x{2080}-\x{2089}]{3,}'
-        - '[\x{2460}-\x{2473}]{3,}'
+        - "[\uFF10-\uFF19]{3,}"
+        - "[\u2070\u00B9\u00B2\u00B3\u2074-\u2079]{3,}"
+        - "[\u2080-\u2089]{3,}"
+        - "[\u2460-\u2473]{3,}"
     moderators_exempt: false
     action: filter
     action_reason: "Unicode digit substitution detected [{{match}}]"
@@ -608,13 +610,13 @@ comment: |
     *If you need help, [message the mods](https://www.reddit.com/message/compose?to=%2Fr%2F{{subreddit}}).*
 ---
 type: submission
-title (regex, full-exact): '(?i)^(?:help|question|amex|advice|please|urgent|asap|!!!+|wtf|omg|idk|smh|\?\?+|\.+|[a-z]{1,4})$'
+title (regex, full-exact): '(?i)^(?:help|question|amex|advice|please|urgent|asap|!!!+|wtf|omg|idk|smh|\?\?+|\.+|[a-z]{1,3})$'
 action: remove
 action_reason: "Rule 3: Low-effort title [{{match}}]"
 comment: "Your post was removed for a low-effort title (Rule 3). Resubmit with a descriptive title (e.g., 'Can I upgrade Gold to Platinum mid-year?' not 'Question'). Check the **Monthly FAQ** first — thorough pre-posting research is required."
 ---
 type: submission
-title (regex, full-exact): '^[^a-z]{15,}$'
+title (regex, full-exact): '^[^a-z]*[A-Z][^a-z]*[A-Z][^a-z]*[A-Z][^a-z]{12,}$'
 action: remove
 action_reason: "Rule 3: All caps title"
 comment: "Your post was removed because the title is in ALL CAPS (Rule 3). Please resubmit with normal capitalization."
@@ -766,7 +768,7 @@ comment: |
     *This is an automated response. If triggered in error, please downvote.*
 ---
 type: submission
-body (regex): '\bfinancial\s+review\b|\b(?:amex|american\s*express)\b[\s\S]*?\bFR\b|\bFR\b[\s\S]*?\b(?:amex|american\s*express)\b|\bfinrev\b'
+body (regex): '\bfinancial\s+review\b|\b(?:amex|american\s*express)\b[\s\S]{0,200}?\bFR\b|\bFR\b[\s\S]{0,200}?\b(?:amex|american\s*express)\b|\bfinrev\b'
 ~body (regex): '\b(?:fire\s+department|first\s+responder|federal\s+register|francs?|france|friday)\b'
 comment: |
     It looks like you may be asking about an Amex Financial Review (FR).
