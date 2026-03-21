@@ -431,7 +431,7 @@
         - '(?i)american[\-_]?express[\-_]?(?:secure|verify|login|update|alert)'
         - '(?i)(?:amex|american[\-_]?express|credit[\-_]?card)[\w\-]*\.(?:xyz|tk|ml|ga|cf|top|click|buzz|icu|gq|work|date|racing|stream|bid|loan|win|party|link|rest|site|space|fun|monster|bar|cfd|sbs|quest)'
         - '(?i)amex\d+\.(?:com|net|org)'
-        - '(?i)\[[^\]]*(?:amex|american\s*express)[^\]]*\]\((?:https?://)?(?!(?:[\w\-]+\.)?(?:americanexpress|amex)\.com(?:[/\s?#:]|$))[\w\.\-]+\.\w+'
+        - '(?i)\[[^\]]*(?:amex|american\s*express)[^\]]*\]\((?:https?://)?(?!(?:[\w\-]+\.)?(?:americanexpress|amex)\.com(?:[/\s?#:]|$))[\w\.\-]+\.\w+(?:[/\w\.\-?#%&=]*)?\)'
     moderators_exempt: false
     action: remove
     action_reason: "Rule 2: Phishing domain detected [{{match}}]"
