@@ -284,7 +284,7 @@
 # Detect fullwidth/Unicode digit substitution used to bypass \d matching
 # Fullwidth digits (U+FF10-FF19), superscript digits, subscript digits,
 # and circled digits can represent numbers while evading standard \d regex.
-# Example: "\\uFF14\\uFF11\\uFF12\\uFF13 \\uFF14\\uFF15\\uFF16\\uFF17 \\uFF18\\uFF19\\uFF10\\uFF11 \\uFF12\\uFF13\\uFF14\\uFF15" evades standard CC detection
+# Example: "\uFF14\uFF11\uFF12\uFF13 \uFF14\uFF15\uFF16\uFF17 \uFF18\uFF19\uFF10\uFF11 \uFF12\uFF13\uFF14\uFF15" evades standard CC detection
 # Uses YAML double-quoted strings so \uXXXX escapes produce literal chars.
     priority: 1
     title+body (regex):
