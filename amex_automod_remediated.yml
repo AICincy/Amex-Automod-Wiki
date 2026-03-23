@@ -26,11 +26,11 @@
 # ============================================================================
 
 ---
-# Shadowban: Replace INPUTNAMEHERE with actual username(s) before deploying
+# Shadowban: Replace [] with actual username(s) before deploying
 # Example: author: [spammer_username1, spammer_username2]
-    author: [INPUTNAMEHERE]
-    action: remove
-    action_reason: "Shadowban [{{author}}]"
+author: []  # REPLACE WITH ACTUAL USERNAMES BEFORE DEPLOYING
+action: remove
+action_reason: "Shadowban [{{author}}]"
 ---
 
 # ============================================================================
@@ -63,7 +63,7 @@
         # JCB classic (2131, 1800) — 15-digit, 4-6-5
         - '(?<!\d)(?:2131|1800)[^\da-zA-Z]{0,6}\d{6}[^\da-zA-Z]{0,6}\d{5}(?!\d)'
     ignore_blockquotes: true
-    moderators_exempt: false
+    moderators_exempt: false  # PII rules apply to all users including mods (per Section 2)
     action: remove
     action_reason: "Credit card number detected [{{match}}]"
     modmail_subject: "Doxxing Alert: Credit Card Number"
@@ -80,10 +80,11 @@
 # CC per-digit separation defense: catches "4 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5"
 # Primary grouped patterns require contiguous digits within each group, so
 # per-digit obfuscation bypasses them. This catches 13-19 digits where each
-# digit may be separated by a single common separator character.
+# digit may be separated by common separator characters (spaces, dots, dashes, etc.)
 # Limited to card-valid first digits [1-6] (includes JCB 1xxx, MC 2xxx, Visa 4xxx, etc.)
+# Allows up to 2 separator characters between digits to catch multi-char padding
     priority: 1
-    title+body (regex): '(?<!\d)[1-6][\s\.\-_/]?\d(?:[\s\.\-_/]?\d){11,17}(?!\d)'
+    title+body (regex): '(?<!\d)[1-6](?:[\s\.\-_/]{0,2}\d){12,18}(?!\d)'
     # Exclude contiguous runs (already caught by secondary rule) — only want truly separated
     ~body (regex): '\d{13,19}'
     ignore_blockquotes: true
@@ -222,21 +223,32 @@
     priority: 1
     is_edited: true
     title+body (regex):
-        # CC grouped (any non-alnum separator)
+        # CC grouped — Visa + Mastercard (16-digit)
         - '(?<!\d)(?:4\d{3}|5[1-5]\d{2}|2(?:22[1-9]|2[3-9]\d|[3-6]\d{2}|7[01]\d|720))[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}(?!\d)'
+        # CC grouped — Amex (15-digit)
         - '(?<!\d)3[47]\d{2}[^\da-zA-Z]{0,6}\d{6}[^\da-zA-Z]{0,6}\d{5}(?!\d)'
+        # CC grouped — Discover (16-digit)
+        - '(?<!\d)(?:6011|64[4-9]\d|65\d{2})[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}(?!\d)'
+        # CC grouped — Diners Club (14-digit)
+        - '(?<!\d)3(?:0[0-5]|[68]\d)\d[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{2}(?!\d)'
+        # CC grouped — JCB modern (16-digit)
+        - '(?<!\d)35\d{2}[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}(?!\d)'
+        # CC grouped — JCB classic (15-digit)
+        - '(?<!\d)(?:2131|1800)[^\da-zA-Z]{0,6}\d{6}[^\da-zA-Z]{0,6}\d{5}(?!\d)'
         # CC per-digit
-        - '(?<!\d)[1-6][\s\.\-_/]?\d(?:[\s\.\-_/]?\d){11,17}(?!\d)'
+        - '(?<!\d)[1-6](?:[\s\.\-_/]{0,2}\d){12,18}(?!\d)'
         # CC contiguous
         - '(?<!\d)\d{13,19}(?!\d)'
         # SSN
         - '(?<!\d)(?!000|666|9\d{2})\d{3}[^\da-zA-Z]{0,4}(?!00)\d{2}[^\da-zA-Z]{0,4}(?!0000)\d{4}(?!\d)'
+        # Phone
+        - '(?<!\d)(?:\+?1[^\da-zA-Z]{0,4})?\(?\d{3}\)?[^\da-zA-Z]{0,4}\d{3}[^\da-zA-Z]{0,4}\d{4}(?!\d)'
         # Email (with spaces around @)
-        - '(?<![\.\w\-])(?!(?:abuse|help|info|no[\s\.\-_]?reply|support)\b)[\w\.\+\-]+\s*@\s*[\w\-]+\.[\w\.\-]+\b'
-        # Obfuscated email
-        - '(?i)(?!(?:abuse|help|info|no[\s\.\-_]?reply|support)\b)[\w\.\+\-]+\s*[\[\(\{<]\s*(?:at|@)\s*[\]\)\}>]\s*[\w\-]+\s*[\[\(\{<]\s*(?:dot|\.)\s*[\]\)\}>]\s*[\w\.\-]+'
-        # Obfuscated email (bare "at"/"dot" without brackets)
-        - '(?i)(?<![\.\w\-])[\w\.\+\-]+\s+(?:at|@)\s+[\w\-]+(?:\s+(?:dot|\.)\s+[\w\.\-]+)+\b'
+        - '(?<![\.\w\-])(?!(?:abuse|help|info|no-?reply|phishing|service|spoof|support)\s*@)[\w\.\+\-]+\s*@\s*[\w\-]+\.[\w\.\-]+\b'
+        # Obfuscated email — bracketed
+        - '(?i)[\w\.\+\-]+\s*[\[\(\{<]\s*(?:at|@)\s*[\]\)\}>]\s*[\w\-]+\s*[\[\(\{<]\s*(?:dot|\.)\s*[\]\)\}>]\s*[\w\.\-]+'
+        # Obfuscated email — ALL CAPS bare keywords
+        - '[\w\.\+\-]+\s+AT\s+[\w\-]+\s+DOT\s+[\w\.\-]+'
     ignore_blockquotes: true
     moderators_exempt: false
     action: filter
@@ -295,11 +307,24 @@
 # Primary PII rules use ignore_blockquotes:true for fewer false positives,
 # but this creates a bypass — PII in > quotes is invisible to them.
 # This rule checks everything (ignore_blockquotes:false) with filter action.
-# Separators synced with primary rules.
+# Uses full patterns from primary rules for accuracy.
     priority: 2
     title+body (regex):
-        - '(?<!\d)(?:4\d{3}|5[1-5]\d{2}|3[47]\d{2}|6011|65\d{2})[^\da-zA-Z]{0,6}\d{4,6}[^\da-zA-Z]{0,6}\d{4,5}(?!\d)'
+        # CC — Visa + Mastercard (16-digit)
+        - '(?<!\d)(?:4\d{3}|5[1-5]\d{2}|2(?:22[1-9]|2[3-9]\d|[3-6]\d{2}|7[01]\d|720))[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}(?!\d)'
+        # CC — Amex (15-digit)
+        - '(?<!\d)3[47]\d{2}[^\da-zA-Z]{0,6}\d{6}[^\da-zA-Z]{0,6}\d{5}(?!\d)'
+        # CC — Discover (16-digit)
+        - '(?<!\d)(?:6011|64[4-9]\d|65\d{2})[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}(?!\d)'
+        # CC — Diners Club (14-digit)
+        - '(?<!\d)3(?:0[0-5]|[68]\d)\d[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{2}(?!\d)'
+        # CC — JCB modern (16-digit)
+        - '(?<!\d)35\d{2}[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}[^\da-zA-Z]{0,6}\d{4}(?!\d)'
+        # CC — JCB classic (15-digit)
+        - '(?<!\d)(?:2131|1800)[^\da-zA-Z]{0,6}\d{6}[^\da-zA-Z]{0,6}\d{5}(?!\d)'
+        # SSN
         - '(?<!\d)(?!000|666|9\d{2})\d{3}[^\da-zA-Z]{0,4}(?!00)\d{2}[^\da-zA-Z]{0,4}(?!0000)\d{4}(?!\d)'
+        # Email
         - '(?<![\.\w\-])[\w\.\+\-]+\s*@\s*[\w\-]+\.[\w\.\-]+\b'
     ignore_blockquotes: false
     moderators_exempt: false
@@ -400,7 +425,7 @@
 # Boundary (?:[/\s?#]|$) prevents americanexpress.com.evil.com bypass
     priority: 1
     title+body+url (regex): 'https?://(?!(?:[\w\-]+\.)*(?:americanexpress|amex)\.com(?:[/\s?#:]|$))(?!(?:[\w\-]+\.)*(?:reddit\.com|redd\.it)(?:[/\s?#:]|$))[\w\.\-]+\.\w+'
-    moderators_exempt: true
+    moderators_exempt: true  # Mods can share helpful external resources
     action: remove
     action_reason: "Rule 2: External link (non-Amex domain) [{{match}}]"
     comment: "Your {{kind}} was removed because it contains a link outside the American Express domain. Per Rule 2, all external links are prohibited and result in a permanent ban. If you believe this was an error, [message the mods](https://www.reddit.com/message/compose?to=%2Fr%2F{{subreddit}})."
@@ -534,10 +559,12 @@ author:
 action: filter
 action_reason: "New account comment: karma < 5, age < 7 days"
 ---
-    author:
-        combined_karma: "< -25"
-    action: remove
-    action_reason: "Troll account (combined karma < -25)"
+---
+type: any
+author:
+    combined_karma: "< -25"
+action: remove
+action_reason: "Troll account (combined karma < -25)"
 ---
 type: comment
 author:
@@ -556,7 +583,7 @@ action_reason: "Inactive aged account (>1yr, <1 combined karma)"
     priority: 1
     title+body (regex):
         - '(?i)\b(?:retard(?:ed)?|f[a@]g(?:got)?|tr[a@]nn(?:y|ie)|d[yi]ke|k[i1]ke|sp[i1]c|ch[i1]nk|w[e3]tb[a@]ck|c[o0][o0]n)\b'
-    moderators_exempt: false
+    moderators_exempt: false  # Rule 5 applies to all users
     action: remove
     action_reason: "Rule 5: Hate speech/slur detected [{{match}}]"
     modmail_subject: "Rule 5 Violation: Hate Speech"
