@@ -167,7 +167,12 @@ modmail: |
 
 AutoModerator acts on content when it's submitted, edited, reported (if the reports check is present); it can also check and act on a post from detecting a comment on it (but not on the author of the post).
 
-AutoModerator acts on a content when it's submitted, edited, reported (if the reports check is present), it can also check and act on a post from detecting a comment on it (but not on the author of the post). AutoModerator rules are made up of four parts: Inputs - the criteria that will be used to make a decision Input Modifiers (optional) - Any change from the default logic that is used to evaluate the inputs Outputs - Action(s) taken if all of the input criteria are met Behavioral Modifiers (optional) - Any change from the default behavior of a particular output action (see 2nd to last section)
+AutoModerator rules are made up of four parts:
+
+- **Inputs** — the criteria that will be used to make a decision
+- **Input Modifiers** (optional) — any change from the default logic that is used to evaluate the inputs
+- **Outputs** — action(s) taken if all of the input criteria are met
+- **Behavioral Modifiers** (optional) — any change from the default behavior of a particular output action (see 2nd to last section)
 
 ### Simple Example
 
@@ -383,8 +388,6 @@ body: ["keyword], or: Missing a single-quote at the end of an item: body: ['keyw
 The purpose of this page is to provide an overview for just the YAML implementation and syntax requirements for AutoModerator, without necessarily detailing every individual check or action. The bulk of the Syntax section is copied from the Full Documentation Page, with subheadings added and a few lines from the Karma/age threshold checks and sub-groups sections. The Checks and Actions subsection is copied from the Writing Basic Rules Page. The Custom Match Subject Suffixes section is copied from this post in August 2014, and has not yet been added to the Full Documentation page. The Error Messages section is copied from https://www.reddit.com/r/AutoModerator/wiki/common_mistakes (by /u/001Guy001)
 
 ### Custom Match Subject Suffixes
-
-section is copied from this post in August 2014, and has not yet been added to the Full Documentation page. The Error Messages section is copied from https://www.reddit.com/r/AutoModerator/wiki/common_mistakes (by /u/001Guy001)
 
 ### YAML Terms
 
