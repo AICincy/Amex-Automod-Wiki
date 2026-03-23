@@ -32,7 +32,7 @@ Ground all content decisions in these repository files:
 |------|-----|
 | `amex_automod_remediated.yml` | Verify posts will not trigger AutoMod rules |
 | `README.md` | Reference subreddit policies and rule enforcement details |
-| `Reddit 1.yml` | Common AutoMod rule patterns for awareness |
+| `automod-reference.md` | AutoMod documentation, common rules, and syntax reference |
 
 ## Brand Voice
 

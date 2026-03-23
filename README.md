@@ -54,12 +54,8 @@ Beyond rule enforcement, the config provides **PII/doxxing protection** (credit 
 | File | Purpose |
 |------|---------|
 | `amex_automod_remediated.yml` | **Production AutoMod config** — deploy this file |
-| `Reddit 1.yml` | Reference: AutoModerator library of common rules |
-| `Reddit 2.txt` | Reference: Common AutoMod configuration mistakes |
-| `Reddit 3.txt` | Reference: Things AutoModerator can and can't do |
-| `Reddit 4.txt` | Reference: AutoMod inputs, modifiers, and outputs |
-| `Reddit 5.txt` | Reference: AutoModerator limitations |
-| `Reddit 6.txt` | Reference: AutoMod error messages and debugging |
+| `automod-reference.md` | Consolidated AutoModerator documentation reference |
+| `community-manager.md` | Community manager skill for r/amex post creation |
 
 ---
 
@@ -265,16 +261,11 @@ For full syntax documentation, see the [AutoModerator full documentation](https:
 
 ## Reference Materials
 
-This repository includes snapshots of Reddit's AutoModerator documentation for offline reference:
+This repository includes a consolidated reference of Reddit's AutoModerator documentation for offline use:
 
 | File | Contents |
 |------|----------|
-| `Reddit 1.yml` | Library of common AutoMod rules and templates |
-| `Reddit 2.txt` | Common configuration mistakes and how to avoid them |
-| `Reddit 3.txt` | Comprehensive list of AutoMod capabilities and limitations |
-| `Reddit 4.txt` | AutoMod inputs, modifiers, and output actions |
-| `Reddit 5.txt` | Detailed AutoModerator limitations |
-| `Reddit 6.txt` | Error messages reference and debugging guide |
+| `automod-reference.md` | All-in-one reference covering basic rules, inputs/modifiers/outputs, limitations, common mistakes, YAML syntax, error messages, and a library of common rule templates |
 
 **Official documentation:**
 - [AutoModerator Full Documentation](https://www.reddit.com/wiki/automoderator/full-documentation)
