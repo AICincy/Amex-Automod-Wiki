@@ -498,7 +498,7 @@ modmail: |
 ---
 # Catch www. prefix URLs to non-whitelisted domains
     priority: 1
-    title+body (regex): '(?i)(?<![/\w])www\.(?!(?:[\w\-]+\.)*(?:americanexpress\.com|amex\.com|reddit\.com|redd\.it|rakuten\.com|doctorofcredit\.com|myfico\.com|fico\.com|nerdwallet\.com|thepointsguy\.com|wallethub\.com|bankrate\.com|experian\.com|equifax\.com|transunion\.com|annualcreditreport\.com|imgur\.com|delta\.com|hilton\.com|marriott\.com)(?:[/\s?#:]|$))[\w\.\-]+\.\w+'
+    title+body (regex): '(?i)(?<![/\w])www\.(?!(?:[\w\-]+\.)*(?:americanexpress\.com|amex\.com|reddit\.com|redd\.it|rakuten\.com|doctorofcredit\.com|myfico\.com|fico\.com|nerdwallet\.com|thepointsguy\.com|wallethub\.com|bankrate\.com|experian\.com|equifax\.com|transunion\.com|annualcreditreport\.com|imgur\.com|delta\.com|hilton\.com|marriott\.com)(?:[/\s?#:,\.)]|$))[\w\.\-]+\.\w+'
     moderators_exempt: true
     action: remove
     action_reason: "Rule 2: External link via www prefix [{{match}}]"
