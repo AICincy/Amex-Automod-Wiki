@@ -875,7 +875,7 @@ comment: "It looks like you may be asking about Amex Offers. Offers are personal
 ---
 # !transfer — Membership Rewards transfer partners
 type: any
-body (regex): '(?i)!transfer|\btransfer\s+(?:partner|point|MR)s?\b|\b(?:MR|membership\s+rewards?)\s+(?:transfer|point)\b'
+body (regex): '(?i)!transfer\b|\btransfer\s+(?:partner|point|MR)s?\b|\b(?:MR|membership\s+rewards?)\s+(?:transfer|point)\b'
 comment: |
     It looks like you may be asking about Membership Rewards transfer partners.
 
