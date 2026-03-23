@@ -2,7 +2,7 @@
 
 # ============================================================================
 # Amex-Automod-Wiki — r/Amex AutoModerator Configuration
-# Version: 5.0 (UX humanization + ! commands + referral thread + expanded allowlist)
+# Version: 5.1 (Production hardening: tightened passive triggers, reports:2 referral enforcement)
 # Last updated: 2026-03-23
 #
 # r/amex Rules enforced:
@@ -459,7 +459,7 @@ comment_stickied: true
 # Community members: use the report button on any duplicate referral comment.
 type: comment
 title (regex): '(?i)(?:monthly\s+)?referral\s+(?:thread|megathread|mega\s+thread)'
-reports: 1
+reports: 2
 action: filter
 action_reason: "Referral thread: reported comment -- verify 30-day rule for /u/{{author}}"
 modmail_subject: "Referral Thread: Reported Comment by /u/{{author}}"
@@ -861,9 +861,16 @@ comment: |
 
     *This is an automated response. If triggered in error, please downvote.*
 ---
-# !offers — Amex Offers overview
+# !offers — Amex Offers overview (explicit !offers command, works in posts and comments)
 type: any
-body (regex): '(?i)!offers?|\bamex\s+(?:offer|deal)s?\b|\badd(?:ed|ing)?\s+(?:all\s+)?offers?\b'
+body (regex): '(?i)!offers?\b'
+comment: "It looks like you may be asking about Amex Offers. Offers are personalized and vary by cardmember. You can view and add offers in the Amex app under the \"Offers\" tab or at [americanexpress.com](https://www.americanexpress.com/us/rewards/membership-rewards/offers/index.html). Remember: offers must be added to your card *before* the purchase. This is an automated response. If triggered in error, please downvote."
+---
+# !offers passive — fire on submissions only to avoid spamming comment threads
+# ("Amex offers" / "Amex deals" appear in many comments as statements, not questions)
+type: submission
+body (regex): '(?i)\bamex\s+(?:offer|deal)s?\b|\badd(?:ed|ing)?\s+(?:all\s+)?offers?\b'
+~body (regex): '(?i)!offers?\b'
 comment: "It looks like you may be asking about Amex Offers. Offers are personalized and vary by cardmember. You can view and add offers in the Amex app under the \"Offers\" tab or at [americanexpress.com](https://www.americanexpress.com/us/rewards/membership-rewards/offers/index.html). Remember: offers must be added to your card *before* the purchase. This is an automated response. If triggered in error, please downvote."
 ---
 # !transfer — Membership Rewards transfer partners
@@ -883,8 +890,12 @@ comment: |
     *This is an automated response. If triggered in error, please downvote.*
 ---
 # !fr / !financialreview — Financial Review guidance
+# Passive triggers: "financial review" (spelled out) or "finrev" are unambiguous.
+# NOTE: \bFR\b proximity patterns were removed — "FR" also means "for real" in casual
+# Reddit speech, causing near-universal false positives on every r/amex comment.
+# Users can still summon this reply explicitly with !fr or !financialreview.
 type: any
-body (regex): '(?i)!(?:fr|financialreview)|\bfinancial\s+review\b|\b(?:amex|american\s*express)\b[\s\S]{0,200}?\bFR\b|\bFR\b[\s\S]{0,200}?\b(?:amex|american\s*express)\b|\bfinrev\b'
+body (regex): '(?i)!(?:fr|financialreview)\b|\bfinancial\s+review\b|\bfinrev\b'
 ~body (regex): '\b(?:fire\s+department|first\s+responder|federal\s+register|francs?|france|friday)\b'
 comment: |
     It looks like you may be asking about an Amex Financial Review (FR).
@@ -902,8 +913,10 @@ comment: |
     *This is an automated response. If triggered in error, please downvote.*
 ---
 # !status — Amex application status links and tips
+# Passive trigger requires "application" to avoid matching "app status" (mobile app)
+# or "when will I get/hear" which fires on unrelated questions constantly.
 type: any
-body (regex): '(?i)!status\b|\b(?:check|application|app)\s+(?:status|decision|pending)\b|\bwhen\s+will\s+I\s+(?:hear|get)\b'
+body (regex): '(?i)!status\b|\b(?:application|credit\s+card\s+app(?:lication)?)\s+(?:status|decision|pending)\b|\bamex\s+application\s+(?:status|decision)\b'
 comment: |
     It looks like you may be checking on an Amex application.
 
@@ -917,8 +930,10 @@ comment: |
     *This is an automated response. If triggered in error, please downvote.*
 ---
 # !contact / !support — Amex contact numbers and options
+# Passive trigger requires intent ("how do I call/contact/reach") to avoid firing
+# on every complaint thread that mentions "Amex customer service is terrible."
 type: any
-body (regex): '(?i)!(?:contact|support)\b|\bhow\s+(?:do\s+I\s+)?(?:call|contact|reach)\s+(?:amex|american\s*express)\b|\bamex\s+(?:phone|number|customer\s+service)\b'
+body (regex): '(?i)!(?:contact|support)\b|\bhow\s+(?:do\s+I\s+)?(?:call|contact|reach)\s+(?:amex|american\s*express)\b'
 comment: |
     It looks like you need to contact Amex directly.
 

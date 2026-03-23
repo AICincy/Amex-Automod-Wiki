@@ -2,7 +2,7 @@
 
 Production-ready [AutoModerator](https://www.reddit.com/wiki/automoderator/full-documentation) ruleset for the **r/amex** subreddit — covering PII protection, policy enforcement, spam control, and community automation.
 
-> **Version 5.0** · 62 active rules across 11 sections · Referral thread management · 19 user `!` commands · Expanded domain allowlist · CI validation · MIT License
+> **Version 5.1** · 63 active rules across 11 sections · Referral thread management · 19 user `!` commands · Expanded domain allowlist · CI validation · MIT License
 
 ---
 
@@ -171,7 +171,7 @@ The only permitted location for referral links is the designated scheduled threa
 
 AutoMod enforces this thread with:
 - **Sticky welcome comment** with rules when the thread is posted
-- **Community-report pipeline**: 1 report → filter + modmail to mods for 30-day compliance review
+- **Community-report pipeline**: 2 reports → filter + modmail to mods for 30-day compliance review
 - **Exemption**: the referral link and veiled solicitation rules are silenced inside this thread
 
 > **Note:** The 30-day per-user limit cannot be enforced natively by AutoMod (per its documented limitations). Community reports + mod review are the enforcement mechanism. For automated enforcement, a Reddit [Devvit](https://developers.reddit.com/docs/devvit) app is recommended.

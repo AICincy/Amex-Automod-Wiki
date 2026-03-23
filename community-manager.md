@@ -100,7 +100,7 @@ The designated referral thread is:
 AutoMod enforces the thread with:
 - **Sticky comment** posted when the thread goes live (welcomes members, explains 30-day limit)
 - **30-day limit**: One comment per user per 30 days. Users should edit their comment if links change, not post a new one.
-- **Enforcement**: Community members report duplicates → AutoMod filters → modmail alert sent to mods
+- **Enforcement**: Community members report duplicates → 2 reports threshold → AutoMod filters → modmail alert sent to mods
 - **Note**: AutoMod cannot track per-user comment history. 30-day enforcement requires mod review of flagged reports.
 
 ## Brand Voice
