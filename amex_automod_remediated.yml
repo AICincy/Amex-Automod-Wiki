@@ -430,7 +430,7 @@
 #
 # 30-day limit per user: AutoMod cannot track per-user comment history
 # (documented limitation -- see automod-reference.md). Enforcement mechanism:
-# sticky reminder + community reports (1 report = filter + modmail to mods).
+# sticky reminder + community reports (2 reports = filter + modmail to mods).
 # For automated 30-day enforcement, a Reddit Devvit app is required.
 # ============================================================================
 
