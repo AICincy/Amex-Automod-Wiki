@@ -785,7 +785,7 @@ action_reason: "Rule 4: Possible moderator complaint [{{match}}]"
 ---
 # !acronyms — common r/amex acronym definitions
 type: any
-body (regex): '(?i)!acronyms?|\bacronyms?\b'
+body (regex): '(?i)!acronyms?'
 comment: |
     Common r/amex acronyms:
 
