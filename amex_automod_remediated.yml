@@ -890,12 +890,30 @@ comment: |
     *This is an automated response. If triggered in error, please downvote.*
 ---
 # !fr / !financialreview — Financial Review guidance
+# Explicit summon: !fr or !financialreview (no exclusions so user commands always work).
+type: any
+body (regex): '(?i)!(?:fr|financialreview)\b'
+comment: |
+    It looks like you may be asking about an Amex Financial Review (FR).
+
+    A Financial Review is when Amex requests documentation to verify your income and spending. **Do not panic.** Key things to know:
+
+    1. Respond promptly -- provide the requested documents (tax returns, bank statements, etc.)
+    2. During the review, your cards may be restricted
+    3. The review typically takes 2-6 weeks
+    4. Being honest and cooperative is the best strategy
+    5. Do NOT close your cards during the review
+
+    Search r/amex for recent FR data points and experiences.
+
+    *This is an automated response. If triggered in error, please downvote.*
+---
+# Financial Review — passive detection (with exclusions for common FR false positives)
 # Passive triggers: "financial review" (spelled out) or "finrev" are unambiguous.
 # NOTE: \bFR\b proximity patterns were removed — "FR" also means "for real" in casual
 # Reddit speech, causing near-universal false positives on every r/amex comment.
-# Users can still summon this reply explicitly with !fr or !financialreview.
 type: any
-body (regex): '(?i)!(?:fr|financialreview)\b|\bfinancial\s+review\b|\bfinrev\b'
+body (regex): '(?i)\bfinancial\s+review\b|\bfinrev\b'
 ~body (regex): '\b(?:fire\s+department|first\s+responder|federal\s+register|francs?|france|friday)\b'
 comment: |
     It looks like you may be asking about an Amex Financial Review (FR).
